@@ -1,0 +1,546 @@
+Termux         高级终端安装使用配置教程
+
+国光   Termux 高级终端安装使用配置教程
+
+目录结构
+
+echo $HOME
+/data/data/com.termux/files/home
+
+echo $PREFIX
+
+/data/data/com.termux/files/usr
+
+echo $TMPPREFIX
+/data/data/com.termux/files/usr/tmp/zsh
+长期使用 Linux 的朋友可能会发现，这个 HOME 路径看上去和我们电脑端的不太一样，这是为了方便 Termux 提供的特殊的环境变量。
+
+
+set nu                " 显示行号
+colorscheme desert    " 颜色主题
+syntax on             " 打开语法高亮
+
+
+安装 PHP
+Termux 官方封装了 PHP，所以我们安装起来就很方便：
+
+
+pkg install php
+安装完成后查看下版本信息：
+
+
+php --version
+
+运行测试文件
+自 PHP5.4 之后 PHP 内置了一个 Web 服务器。在 Termux 下可以很方便地测试 PHP 文件
+
+首先在家(~)目录下建一个www 文件夹，然后在www文件夹下新建一个index.php文件，内容为：
+
+<?php phpinfo();?>
+
+完整的步骤如下：
+
+# 新建 www 文件夹
+mkdir ~/www
+
+# 创建 inedx.php 文件
+echo '<?php phpinfo();?>' > ~/www/index.php
+编写完成index.php文件后，尝试使用 PHP 内置的 WebServer 直接启动：
+
+# 进入家目录
+cd ~
+
+# 启动 WebServer
+php -S 0.0.0.0:8888 -t www/
+自己制定端口后，浏览器访问http://127.0.0.1:8888
+
+# 更新是个好习惯
+pkg update
+
+
+DVWA
+DVWA 是一个用来搞 Web 安全从业者入门使用的一个练习靶场，用来学习掌握基本的漏洞原理使用的，如果你对 Web 安全不感兴趣的话可以直接跳过这一个小节。
+
+国光建议 DVWA 练习的时候 要结合源码去分析漏洞 不要直接把网上攻击流程走一步就草草了之了 不看源码的学习 等于啥都没有学
+
+环境准备
+因为 DVWA 靶场是 PHP编写的，所以你需要 提前配置好 Nginx 、PHP 以及 数据库，关于这方面配置可以参考前面开发环境下分类的「Nginx」、「MariaDB(MySQL)」和 「Nginx 解析 PHP」章节
+
+下载 DVWA
+
+wget https://github.com/ethicalhack3r/DVWA/archive/master.zip
+如果访问 Github 比较慢的话，可以尝试如下链接：
+
+
+wget https://hub.fastgit.org/ethicalhack3r/DVWA/archive/master.zip
+解压到 Nginx 目录下
+
+# 解压
+unzip master.zip -d $PREFIX/share/nginx/html/
+
+# 重命名
+
+cd $PREFIX/share/nginx/html/
+mv DVWA-master dvwa
+新建数据库
+sql
+mysql -uroot -p*** -e"create database dvwa;show databases;"
+*** 这里是mysql的密码
+
+
+可以看到 dvwa 数据库已经新建成功了。
+
+编辑 DVWA 配置文件
+
+# 将配置文件 还原为 PHP 后缀
+cd $PREFIX/share/nginx/html/dvwa/config
+mv config.inc.php.dist config.inc.php
+
+# 编辑配置文件
+vim mv config.inc.php.dist config.inc.php
+只需要定位找到如下内容 根据你的实际情况填写就可以了：
+
+
+初次访问测试网站
+按照上述配置好 DVWA 之后，浏览器访问：http://192.168.31.124:8080/dvwa/setup.php
+
+可以看到 allow_url_include 运行 URL 远程包含没有开启，我们得手动开启一下：
+
+
+实际上正常人是不会去开启这个的，十分危险，但是 DVWA 是一个靶场，有些漏洞实际上就是利用 PHP 配置不当造成的，这样才让新手有攻击下来的信心。
+
+配置 php.ini
+Termux 下默认是没有 php.ini 文件的，不信我们手动来查找一下：
+
+
+php --ini
+
+Configuration File (php.ini) Path: /data/data/com.termux/files/usr/lib
+Loaded Configuration File:         (none)
+Scan for additional .ini files in: (none)
+Additional .ini files parsed:      (none)
+发现 php.ini 的文件应该存放在 /data/data/com.termux/files/usr/lib 目录下，但是 PHP 没有找到配置文件，所以需要我们手动在这个目录下新建 php.ini 配置文件:
+
+echo 'allow_url_include = On' > $PREFIX/lib/php.ini
+
+
+注意这是一个不安全的配置 只是为了配合本地的 DVWA 靶场 做模拟黑客攻击练习使用的
+
+配置完成后，自己尝试使用php --ini来定位搜索配置文件，会发现 PHP 已经找到了配置文件了。
+
+修改完配置文件后 得重启 php-fpm 服务:
+
+# 杀掉 php-fpm 相关的进程
+kill -9 `pgrep fpm`
+
+# 再次启动 php-fpm
+php-fpm
+再次访问测试网站
+浏览器访问: http://192.168.31.124:8080/dvwa/setup.php
+
+可以看到刚刚的配置文件生效了，现在安全检查全部通过
+
+
+既然 安全检查通过的话，那么就直接页面滚动到最下面直接点击 Create/Reset Database初始化数据库按钮即可，初始化成功后会自动跳转到登录界面。
+
+DVWA 默认的用户有5个，用户名密码如下：
+用户名	密码
+admin	password
+gordonb	abc123
+1337	charley
+pablo	letmein
+smithy	password
+
+
+Hexo
+Hexo 是一个用 Nodejs 编写的快速、简洁且高效的博客框架。Hexo 使用 Markdown 解析文章，在几秒内，即可利用靓丽的主题生成静态网页。另外大家看到国光我的博客就是使用 Hexo 搭建的哦。
+
+安装 Hexo
+Hexo 是用 Nodejs 编写的，所以安装的话得使用 npm 命令来安装：
+
+npm install hexo-cli -g
+安装完成的话，顺便看一下 Hexo 相关的版本信息吧：
+
+hexo -v
+Hexo 基本部署
+我们建立一个目录，然后到这个目录下初始化 Hexo 环境：
+
+
+# 手动创建一个目录
+mkdir hexo  
+
+# 进入目录下并初始化Hexo环境
+cd hexo  
+hexo init  
+
+#生成静态文件 启动Hexo
+hexo g
+hexo s      
+
+
+然后就跑起来一个最基本的 Hexo 博客，关于 Hexo 博客的详细教程，建议搭建去参考 Hexo 官方文档，我这里重点在于 Termux 其他的不作过多的叙述。
+
+使用浏览器访问: http://127.0.0.1:4000 即可看到 Hexo 的效果图：
+
+Hexo 部署到 Nginx
+Hexo 是纯静态博客，官方默认把 Hexo 搭建在 Github Pages 仅仅是把 Hexo 根目录的 public 文件夹即 Hexo 生成的纯 HTML 源码部署到上面而已。所以知道这样原理 我们就可以轻而易举地将 Hexo 部署到 Nginx 下面。
+
+生成 HTML 纯静态源码
+
+hexo g
+
+
+可以看到 Hexo 的根目录下 已经生成了 public 文件夹了
+
+拷贝源码搭到 Nginx
+现在我们只需要将 public 的文件夹里面的源码 全部拷贝到 Nginx 的网站根目录下：
+
+
+# 在 nginx 根目录下新建 hexo 文件夹
+mkdir $PREFIX/share/nginx/html/hexo
+
+# 拷贝 源码到 nginx 下
+cp -rf public/* $PREFIX/share/nginx/html/hexo
+
+访问效果查看
+浏览器访问:http://127.0.0.1:8080/hexo/ 即可看到效果：
+
+
+当然这里网站的 CSS 等样式没有加载出来，这个原因是 Hexo 对网站目录下部署并不友好 ，大概有如下解决方法：
+
+Nginx vhosts 配置多域名，这个服务器上常用的操作，但是 Termux 里面实现难度较高
+将 Hexo 的源码 直接拷贝到 Nginx 的根目录下，不用拷贝到 html/hexo 目录下了，然后直接访问 http://127.0.0.1:8080 即可看到效果
+国光这里就只是说一下这个思路，因为强迫症的我不能忍受 Nginx 根目录的文件 乱七八糟 =，= 大家想尝试的话 按照我这个思路去尝试就可以了。
+
+KodExplorer
+KodExplorer 是一款开源文件资源管理器，搭建起来很简单，我们也可以在 Termux 搭建，这样就可以实现 Temux 下的文件分享了，十分优雅方便。在我的这篇文章：https://www.sqlsec.com/2019/11/kode.html 里面也讲解了 macOS下的安装。
+
+下载解压 Kod
+官网的下载地址：https://kodcloud.com/download/
+
+我们拷贝下载链接后，使用 wegt 可以直接下载：
+
+
+# 下载
+wget http://static.kodcloud.com/update/download/kodexplorer4.40.zip
+
+# 解压 到 Nginx 的 kod 目录下
+unzip kodexplorer4.40.zip -d $PREFIX/share/nginx/html/kod
+
+安装设置 Kod
+Nginx 确保已经配置可以解析 PHP，如果没有配置好，那么请参考 上文的 「开发环境」小节
+
+手机浏览器访问: http://127.0.0.1:8080/kod 即可进入设置管理密码界面：
+
+
+
+设置完密码登录看看，建议大家在 Kod 里面设置电脑版视图，效果很赞，下面是主界面截图：
+
+
+推荐大家使用电脑版
+
+当然在局域网的情况下，通过 IP 地址，局域网的其他设备也是可以轻松访问到你的文件的，文件共享目的达成。
+
+WordPress
+WordPress 是一个以 PHP 和 MySQL 为平台的自由开源的博客软件和内容管理系统。如果你的 Termux 没有配置好 MySQL、PHP、Nginx 的话 那么请参考上面的 开发环境 章节来进行配置。
+
+新建数据库
+网站需要数据库，在安装 WordPress 前我们先需要新建一个数据库，以供后面的网站安装：
+
+sql
+mysql -uroot -p*** -e"create database wordpress;show databases;"
+*** 这里是mysql的密码
+
+
+
+可以看到 wordpress 数据库已经新建成功了。
+
+下载 WordPress
+WordPress 历届版本: https://cn.wordpress.org/download/releases/
+
+选择最新的版本后，复制下载的直链，那么就开始用 wget 下载并解压吧：
+
+bash
+#  wget 下载
+wget https://cn.wordpress.org/wordpress-5.4-zh_CN.zip
+
+# unzip 解压 没有安装unzip请自行安装
+unzip wordpress-4.9.4-zh_CN.zip
+
+# 将解压的文件夹移动到 nginx 网站根目录下
+mv wordpress/ $PREFIX/share/nginx/html
+如果WordPress官网这个下载又问题的话，可以多尝试几次，也可以通过如下渠道来下载
+
+WordPress Too Many Requests 出现这种报错，多半是中国的 IP 又被国外屏蔽了，可以尝试使用迅雷来下载
+挂代理来下载
+百度找国内的第三方非官方下载站下载（不是很推荐）
+配置 Nginx 解析
+如果你读过前面的「开发环境」、「Nginx」、「Nginx 解析 PHP」三个小节的话，这里直接启动 php-fpm 和 Nginx 即可：
+
+bash
+php-fpm
+nginx
+当然如果你的 php-fpm 和 Nginx 服务以及启动的话 就直接跳到下一步吧
+
+安装 WordPress
+浏览器访问: http://127/.0.0.1/wordpress/进行 WordPress 的安装，根据提示填写好自己的数据库信息即可安装，详细这一步大家都懂的，国光这里直接放安装好的效果图吧：
+
+
+WordPress的后台
+
+系统安装
+Termux 可以安装其他 Linux 发行版系统，核心用到的工具是 chroot ，所以我们得确保安装系统的时候 proot 这个包你是安装好的，然后因为操作系统店都有官方维护的脚本，所以安装起来甚至比我们前面配置的开发环境还要简单，下面来具体的介绍吧。
+
+实用必备工具
+有能力的朋友以下工具可以直接在 F-Droid 或者 Google Play 商店里面下载最新的版本，国光这里就简单列举搬运一下：
+
+软件	下载地址	说明
+VNC Viewer 3.6.1.42089 汉化版	蓝奏云	远程连接使用
+NetHunter KeX 4.0.7-6	蓝奏云	Kali 官方 远程连接工具
+AnLinux 6.10	蓝奏云	提供比较全面的系统安装脚本
+AndroNix 4.2	Google Play	提供比较全面的系统安装脚本
+VNC 工具的隐藏技巧，首先我们默认使用 VNC Viewer 这个工具远程是下图这张效果，可以看到并没有占满全屏，强迫症无法接受：
+
+
+VNC Viewer
+
+然后使用 Kali 官方的 NetHunter KeX 远程连接，屏幕就完全被充分利用了：
+
+
+NetHunter KeX
+
+但是 NetHunter Kex 在远程操作体验上又不如 VNC Viewer 舒服，难道鱼和熊掌就无法兼得了吗？ 当然可以！！！ 经过国光测试，这个时候后台关掉 NetHunter KeX 的时候呢，再用 VNC Viewer 就可以完美的利用手机的全部屏幕空间了，岂不是美哉。
+
+Kali NetHunter
+Kali NetHunter 是基于 Kali Linux 的免费、开源的 Android 设备移动渗透测试平台，安全从业者必备的操作系统。
+
+安装 Kali NetHunter
+Kali 官网提供的完整的安装命令如下，下面国光标上注释方便大家理解:
+
+
+# 申请存储访问权限
+termux-setup-storage
+
+# 安装 wget
+pkg install wget
+
+# 下载 安装脚本
+wget -O install-nethunter-termux https://offs.ec/2MceZWr 
+
+# 给脚本执行权限
+chmod +x install-nethunter-termux 
+
+# 运行安装脚本
+./install-nethunter-termux
+里面很多操作我们之前都做了，所以现在只需要如下几步即可：
+
+
+# 下载 安装脚本
+wget -O install-nethunter-termux https://offs.ec/2MceZWr 
+
+# 如果上面这一步卡的话，可以使用国光我放到国内的脚本
+
+wget -O install-nethunter-termux https://html.sqlsec.com/install-nethunter-termux.txt
+
+# 给脚本执行权限
+chmod +x install-nethunter-termux 
+
+# 运行安装脚本
+./install-nethunter-termux
+
+下载包大概 1GB+ 左右安装过程比较慢，国光这里建议大家挂代理下载，提供效率和成功率
+
+如果你没有代理怎么办？ 
+
+https://images.kali.org/nethunter/kalifs-arm64-full.tar.xz 这个就是最大的 1GB+ 的数据包，复制链接地址到迅雷等下载工具里面下载下来，然后拷贝到 Termux 手机的安装脚本同级目录下，或者直接更改脚本把这个数据包的下载地址替换为局域网的地址都可以方法有很多 大家可以自行发挥。
+
+Termux 除了支持 apt 命令外，还在此基础上封装了pkg命令，pkg 命令向下兼容 apt 命令。apt命令大家应该都比较熟悉了，这里直接简单的介绍下pkg命令:
+
+
+pkg search <query>              # 搜索包
+pkg install <package>           # 安装包
+pkg uninstall <package>         # 卸载包
+pkg reinstall <package>         # 重新安装包
+pkg update                      # 更新源
+pkg upgrade                     # 升级软件包
+pkg list-all                    # 列出可供安装的所有包
+pkg list-installed              # 列出已经安装的包
+pkg show <package>              # 显示某个包的详细信息
+pkg files <package>             # 显示某个包的相关文件夹路径
+
+国光建议大家使用 pkg 命令，因为 pkg 命令每次安装的时候自动执行 apt update 命令，还是比较方便的。
+
+软件安装
+除了通过上述的 pkg 命令安装软件以外，如果我们有 .deb 软件包文件，也可以使用 dpkg 进行安装。
+
+
+dpkg -i ./package.de         # 安装 deb 包
+dpkg --remove [package name] # 卸载软件包
+dpkg -l                      # 查看已安装的包
+man dpkg                     # 查看详细文档
+
+Termux 高级终端安装使用配置教程
+
+Android Termux
+
+https://www.sqlsec.com/2018/05/termux.html
+
+学习资源
+考虑到手机用户体验和离线观看教程的需求，国光打包了几种风格的 PDF 版本，并且已经插入好目录，阅读体验会比较友好。
+
+黑色背景的 PDF : Termux入门指南（Vue 黑）
+
+白色背景的 PDF : Termux入门指南（Github 白）
+
+macOS light风格 : Termux入门指南（macOS 白）
+
+Gothic风格 : Termux入门指南（简约线条）
+
+因为本文内容超级长，也包含了大量的图片，手机浏览起来难免会卡顿，而且如果你浏览比较拮据的话，还是建议看 PDF 版本的，国光还是比较建议有条件的同学使用 PC 端观看本文。
+
+早期我的信息安全交流群里面陆陆续续加了很多 Temux 玩家，然而那是一个信息安全交流群，Termux 的提问经常没有人回答，所以后来我就把博客所有的加群链接给去了。现在国光我单独建立了 1 个 Temux 群，加群链接藏在本文当中，是一个彩蛋，缘妙不可言，随缘入群吧。好了话不多说，教程开始了，希望本文可以帮助到大家。
+
+Termux 简介
+文档相关
+
+Termux 官网
+Github 项目地址
+官方英文 WiKi 文档
+下载地址
+
+F-Droid 下载地址
+
+Google Play 下载地址
+
+酷安 下载地址
+
+F-Droid 市场版本下载的版本比 Google Play （貌似 1 年多没有更新了）下载的要新，而且插件这块安装也很方便，有能力的朋友建议首先考虑下载 F-Droid 版本的，然后考虑 Google Play 版本，最后再考虑酷安的版本。
+
+Termux 是一个 Android 下一个高级的终端模拟器，开源且不需要 root，支持 apt 管理软件包，十分方便安装软件包，完美支持 Python、 PHP、 Ruby、 Nodejs、 MySQL等。随着智能设备的普及和性能的不断提升，如今的手机、平板等的硬件标准已达到了初级桌面计算机的硬件标准，用心去打造 DIY 的话完全可以把手机变成一个强大的极客工具。
+
+初始化
+
+第一次启动Termux的时候需要从远程服务器加载数据，然而可能会遇到这种问题：
+
+verilog
+Ubable to install
+Termux was unable to install the bootstrap packages.
+Check your network connection and try again.
+这里的Termux官方远程的服务器地址是: http://termux.net/bootstrap/
+
+
+目前解决方法有两种：
+
+VPN 全局代理 （成功率很高）
+如果你是 WiFi 的话尝试切换到运营商流量 （有一定成功率）
+① F-Droid > ② Google Play > ③ 酷安 根据这个顺序尝试安装，如果不行再重复1、2 步骤操作
+基本操作
+基本操作还是要学习一下的，可以事半功倍。
+
+缩放文本
+可以使用缩放手势来调整其字体大小。 对就是 「双指放大缩小」照片那样操作。
+
+
+长按屏幕
+长按屏幕会调出显示菜单项（包括复制、粘贴、更多），方便我们进行复制或者粘贴：
+
+
+More 菜单的说明如下：
+
+bash
+长按屏幕
+├── COPY:    # 复制
+├── PASTE:   # 粘贴
+├── More:    # 更多
+   ├── Select URL:             # 提取屏幕所有网址
+   └── Share transcipt:        # 分享命令脚本
+   └── Reset:                  # 重置
+   └── Kill process:           # 杀掉当前会话进程
+   └── Style:                  # 风格配色 需要自行安装
+   └── Keep screen on:         # 保持屏幕常亮
+   └── Help:                   # 帮助文档
+会话管理
+显示隐藏式导航栏，可以新建、切换、重命名会话 session 和调用弹出输入法：
+
+
+
+同时在Android的通知栏中也可以看到当前Termux运行的会话数：
+
+打开和隐藏这个扩展功能按键目前有下面两种方法：
+
+方法一
+
+从左向右滑动，显示隐藏式导航栏，长按左下角的KEYBOARD
+
+方法二
+
+使用Termux快捷键:音量++Q键 或者 音量++K键
+
+当然这个常用按键在 Termux 后面的版本也支持自定义的，详情见本文的「进阶配置」-「定制常用按键」这一小节。
+
+基础知识
+这些基础知识简单了解一下就可以了，Linux 用的多了就会慢慢熟悉理解了。
+
+快捷键表
+Ctrl键是终端用户常用的按键，但大多数触摸键盘都没有这个按键，因此 Termux 使用音量减小按钮来模拟Ctrl键。
+例如，在触摸键盘上按音量减小+ L就相当于是键盘上按Ctrl + L的效果一样，达到清屏的效果。
+
+Ctrl + A -> 将光标移动到行首
+Ctrl + C -> 中止当前进程
+Ctrl + D -> 注销终端会话
+Ctrl + E -> 将光标移动到行尾
+Ctrl + K -> 从光标删除到行尾
+Ctrl + U -> 从光标删除到行首
+Ctrl + L -> 清除终端
+Ctrl + Z -> 挂起（发送SIGTSTP到）当前进程
+Ctrl + alt + C -> 打开新会话（仅适用于 黑客键盘）
+音量加键也可以作为产生特定输入的特殊键.
+
+音量加 + E -> Esc键
+音量加 + T -> Tab键
+音量加 + 1 -> F1（音量增加 + 2 → F2…以此类推）
+音量加 + 0 -> F10
+音量加 + B -> Alt + B，使用readline时返回一个单词
+音量加 + F -> Alt + F，使用readline时转发一个单词
+音量加 + X -> Alt+X
+音量加 + W -> 向上箭头键
+音量加 + A -> 向左箭头键
+音量加 + S -> 向下箭头键
+音量加 + D -> 向右箭头键
+音量加 + L -> | （管道字符）
+音量加 + H -> 〜（波浪号字符）
+音量加 + U -> _ (下划线字符)
+音量加 + P -> 上一页
+音量加 + N -> 下一页
+音量加 + . -> Ctrl + \（SIGQUIT）
+音量加 + V -> 显示音量控制
+音量加 + Q -> 切换显示的功能键视
+音量加 + K -> 切换显示的功能键视图
+快捷键用的熟悉的话也可以极大提高操作的效率。
+基本命令
+Termux 除了支持 apt 命令外，还在此基础上封装了pkg命令，pkg 命令向下兼容 apt 命令。apt命令大家应该都比较熟悉了，这里直接简单的介绍下pkg命令:
+pkg search <query>              # 搜索包
+pkg install <package>           # 安装包
+pkg uninstall <package>         # 卸载包
+pkg reinstall <package>         # 重新安装包
+pkg update                      # 更新源
+pkg upgrade                     # 升级软件包
+pkg list-all                    # 列出可供安装的所有包
+pkg list-installed              # 列出已经安装的包
+pkg show <package>              # 显示某个包的详细信息
+
+pkg files <package>             # 显示某个包的相关文件夹路径
+
+
+pkg files <package>             # 显示某个包的相关文件夹路径
+
+常用命令
+
+ls
+
+pwd
+
+cd
+
+
+
