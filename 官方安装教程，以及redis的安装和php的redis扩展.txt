@@ -1,0 +1,252 @@
+php的redis扩展不是redis本身
+
+就像   pymysql  和  mariadb
+
+
+utermux  安装  redis
+
+
+官方现在源码下载官方最新版
+
+https://redis.io/download
+
+$ pwd        查看目录        当前所在目录
+
+redis的安装和配置
+
+1.官方现在源码
+
+https://redis.io/download
+
+$ wget https://download.redis.io/releases/redis-6.2.6.tar.gz
+$ tar xzf redis-6.2.6.tar.gz
+$ cd redis-6.2.6
+$ make
+
+$ 自己找目录 src/redis-server
+
+ 或直接  $ redis-server
+
+$     自己找目录 src/redis-cli 
+
+或直接$ redis-cli
+
+
+官方安装教程
+
+Installation
+From source code
+Download, extract and compile Redis with:
+
+$ wget https://download.redis.io/releases/redis-6.2.6.tar.gz
+$ tar xzf redis-6.2.6.tar.gz
+$ cd redis-6.2.6
+$ make
+The binaries that are now compiled are available in the src directory. Run Redis with:
+
+$ 自己找目录 src/redis-server
+
+ 或直接  $ redis-server
+
+You can interact with Redis using the built-in client:
+
+$     自己找目录 src/redis-cli 
+
+或直接$ redis-cli
+
+
+redis> set foo bar
+OK
+
+redis> get foo
+"bar"
+
+127.0.0.1:6379> set foo bar
+
+OK
+
+
+127.0.0.1:6379> get foo
+
+"bar"
+
+127.0.0.1:6379>
+
+127.0.0.1:6379> exit
+$
+$ pwd        //查看目录   当前所在目录
+/data/data/com.termux/files/home/redis-6.2.6
+$
+
+From the official Debian/Ubuntu APT Repository [Beta]
+You can install recent stable versions of Redis from the official packages.redis.io APT repository. Add the repository to the apt index, update it and install:
+
+$ curl https://packages.redis.io/gpg | sudo apt-key add -
+$ echo "deb https://packages.redis.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/redis.list
+$ sudo apt-get update
+$ sudo apt-get install redis
+From the official Ubuntu PPA
+You can install the latest stable version of Redis from the redislabs/redis package repository. Add the repository to the apt index, update it and install:
+
+$ sudo add-apt-repository ppa:redislabs/redis
+$ sudo apt-get update
+$ sudo apt-get install redis
+From Snapcraft
+You can install the latest stable version of Redis from the Snapcraft marketplace:
+
+$ sudo snap install redis
+Are you new to Redis? Try our online, interactive tutorial.
+
+
+官方现在源码下载官方最新版
+
+https://redis.io/download
+
+
+官方  redis 在线工具
+
+https://try.redis.io/
+
+
+php的redis扩展不是redis本身
+
+就像   pymysql  和  mariadb
+
+redis的安装和php的redis扩展
+
+https://www.cnblogs.com/myvic/p/7742924.html
+
+
+redis的扩展
+
+复制代码
+a.下载php的redis扩展
+　　wget http://pecl.php.net/get/redis-3.1.4.tgz
+b.解压
+　　tar zxvf redis-3.1.4.tgz
+c.执行phpize的
+　　进入解压的目录；执行 /usr/local/php/bin/phpize
+d.编译 安装
+　　./configure --with-php-config=/usr/local/php/bin/php-config
+   make &&　make install
+ e.开启
+　　vim php.ini修改
+　　extension_dir = "/usr/local/php/lib/php/extensions/no-debug-non-zts-20131226/"
+　　extension=redis.so
+ f.测试
+ $redis=new Redis();
+ $res=$redis->connect('127.0.0.1',6379);
+ var_dump($res);
+
+返回true ，安装成功；
+
+
+linux部署redis  参考
+
+软件架构
+centos7系统，redis最新版本
+
+安装教程
+1.获取redis资源
+
+wget http://download.redis.io/releases/redis-4.0.11.tar.gz
+
+解压安装
+tar zxf redis-4.0.11.tar.gz
+
+cd redis-4.0.11
+
+make
+
+cd src
+
+make install PREFIX=/usr/local/redis
+
+移动配置文件到安装目录下
+mkdir /usr/local/redis/etc
+
+cd redis-4.0.11
+
+mv redis.conf /usr/local/redis/etc
+
+配置redis为后台启动
+vim /usr/local/redis/etc/redis.conf
+
+将daemonize no 改为daemonize yes
+
+将redis加入开机启动
+vim /etc/rc.local
+
+添加内容：
+
+/usr/local/redis/bin/redis-server /usr/local/redis/etc/redis.conf
+
+开启redis
+/usr/local/redis/bin/redis-server /usr/local/redis/etc/redis.conf
+
+测试启动
+./bin/redis-cli
+
+ping
+
+返回PONG就说明启动成功。
+
+服务端启动成功后，执行redis-cli启动redis客户端，查看端口号：netstat -anput|grep 6379
+
+关闭服务：redis-cli shutdown
+
+使用说明
+
+常用命令
+/usr/local/redis/bin/redis-server /usr/local/redis/etc/redis.conf //启动redis
+
+pkill redis //停止redis
+
+卸载redis：
+
+rm -rf /usr/local/redis //卸载安装目录
+
+rm -rf /usr/bin/redis-* //删除所有redis相关命令脚本
+
+rm -rf /root/download/redis-4.0.11 //删除redis解压文件夹
+
+redis设置密码
+默认是不需要密码认证的。
+
+修改配置文件：vim /usr/local/redis/etc/redis.conf
+
+                 #requirepass foobared      //500行
+
+                 去掉注释，并修改为所需要的密码：
+
+                 requirepass  mypassword(其中password就是要设置的密码)
+重启redis服务。
+
+redis客户端的简单使用
+//首先连接客户端
+
+./bin/redis-cli
+
+//检查网络是否可以
+
+127.0.0.1:6379>ping
+
+PONG
+
+//设置一个键值对
+
+set name cheny
+
+//获取刚才设置的键值对
+
+get name
+
+//查看所有的键
+
+keys *
+
+//删除name这个键
+
+del name
+
+
