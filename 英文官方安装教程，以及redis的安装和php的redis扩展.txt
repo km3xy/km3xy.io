@@ -1,0 +1,79 @@
+英文官方安装教程，以及redis的安装和php的redis扩展
+
+
+php的redis扩展不是redis本身
+
+就像   pymysql  和  mariadb
+
+
+utermux  安装  redis
+
+
+官方现在源码下载官方最新版
+
+https://redis.io/download
+
+$ pwd        查看目录        当前所在目录
+
+redis的安装和配置
+
+1.官方现在源码
+
+https://redis.io/download
+
+$ wget https://download.redis.io/releases/redis-6.2.6.tar.gz
+$ tar xzf redis-6.2.6.tar.gz
+$ cd redis-6.2.6
+$ make
+
+$ 自己找目录 src/redis-server
+
+
+# cd src
+# ./redis-server
+
+
+ 或直接  $ redis-server
+
+$     自己找目录 src/redis-cli 
+
+或直接$ redis-cli
+
+
+
+
+# cd src
+# ./redis-server ../redis.conf
+redis.conf 是一个默认的配置文件。我们可以根据需要使用自己的配置文件。
+
+启动 redis 服务进程后，就可以使用测试客户端程序 redis-cli 和 redis 服务交互了。 比如：
+
+# cd src
+# ./redis-cli
+redis> set foo bar
+OK
+redis> get foo
+"bar"
+
+
+
+官方安装教程
+
+Installation
+From source code
+Download, extract and compile Redis with:
+
+$ wget https://download.redis.io/releases/redis-6.2.6.tar.gz
+$ tar xzf redis-6.2.6.tar.gz
+$ cd redis-6.2.6
+$ make
+The binaries that are now compiled are available in the src directory. Run Redis with:
+
+
+$ cd src
+
+
+# cd src
+# ./redis-server
+
+
