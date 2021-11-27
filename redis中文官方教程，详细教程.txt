@@ -1,0 +1,19 @@
+redis中文官方教程，详细教程
+
+
+https://github.com/phpredis/phpredis/releases
+
+//   tags下面  Tags里面下载phpredis扩展
+
+
+redis中文官方教程，详细教程
+
+https://www.redis.com.cn/linux-install-redis.html
+
+
+
+https://www.redis.com.cn/php-redis.html
+
+
+
+
